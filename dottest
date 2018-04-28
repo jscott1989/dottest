@@ -108,10 +108,10 @@ class DotTest:
                 o.write("%s=%s\n" % (domain, port))
 
     def refresh_system(self):
-        print("Total %s configured rules." % len(self._rules.keys()))
         self._refresh_hosts()
         self._refresh_ifconfig()
         self._refresh_ports()
+        print("Total %s configured rules." % len(self._rules.keys()))
 
     def _refresh_hosts(self):
         with open("/etc/hosts", "r") as o:
@@ -149,7 +149,7 @@ class DotTest:
             n += 1
 
         try:
-            pfctl("-ef", "-", _in=echo("\n".join(current_rules)))
+            pfctl("-ef", "-", _in=echo("\n".join(rules)))
         except:
             # It always throws because of a warning. Ignore it
             pass
