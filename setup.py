@@ -9,6 +9,7 @@ setup(name="dotTest",
       scripts=["dottest"],
       install_requires=[
         "docopt>=0.6.2",
-        "sh>=1.12.14"
+        "sh>=1.12.14",
+        "pyyaml>=3.12"
       ]
       )

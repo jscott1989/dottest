@@ -5,6 +5,7 @@ import os
 import sys
 import sys
 import collections
+import yaml
 from sh import pfctl, echo, ifconfig
 
 ROOT_CONFIG_FILE = os.path.expanduser("~/.dottest-config")
@@ -22,6 +23,47 @@ def require_sudo():
     if os.geteuid() != 0:
         os.execvp("sudo", ["sudo"] + sys.argv)
 
+def dottest_discoverer(path, config):
+    dottest_path = os.path.join(path, ".dottest")
+
+    if os.path.isfile(dottest_path):
+        with open(dottest_path, "r") as o:
+            values = [l.strip().split("=") for l in o]
+            return {v[0].strip(): int(v[1].strip()) for v in values}
+
+    return {}
+
+
+def spring_discoverer(path, config):
+    resources_path = os.path.join(path, "src/main/resources")
+    dev_application_properties_path = os.path.join(resources_path, "application-dev.properties")
+    application_properties_path = os.path.join(resources_path, "application.properties")
+    directory_module_name = os.path.split(path)[1]
+    domain = directory_module_name + config["domain_suffix"]
+
+    if os.path.isfile(dev_application_properties_path):
+        with open(dev_application_properties_path, "r") as o:
+            values = [l.strip().split("=") for l in o]
+            kv = {v[0].strip(): v[1].strip() for v in values}
+            if "server.port" in kv:
+                port = int(kv["server.port"])
+                return {domain: port}
+
+    if os.path.isfile(application_properties_path):
+        with open(application_properties_path, "r") as o:
+            values = [l.strip().split("=") for l in o]
+            kv = {v[0].strip(): v[1].strip() for v in values}
+            if "server.port" in kv:
+                port = int(kv["server.port"])
+                return {domain: port}
+
+    return {}
+
+DISCOVERERS = {
+    "dottest": dottest_discoverer,
+    "spring": spring_discoverer
+}
+
 
 class DotTest:
 
@@ -32,18 +74,25 @@ class DotTest:
     def read_config(self):
         self._config = {
             "domain_suffix": ".test",
-            "address_prefix": "127.0.0."
+            "address_prefix": "127.0.0.",
+            "discovery": ["dottest"]
         }
         if os.path.exists(ROOT_CONFIG_FILE):
             with open(ROOT_CONFIG_FILE, "r") as i:
-                self._config.update(dict(l.strip().split("=", 1) for l in i.readlines()))
+                print(self._config, yaml.load(i))
+                self._config.update(yaml.load(i))
         if os.path.exists(SPECIFIC_CONFIG_FILE):
             with open(SPECIFIC_CONFIG_FILE, "r") as i:
-                self._config.update(dict(l.strip().split("=", 1) for l in i.readlines()))
+                self._config.update(yaml.load(i))
 
         if not self._config["address_prefix"].endswith(".") or not self._config["address_prefix"].count(".") == 3:
             eprint("Error: Invalid address prefix %s" % self._config["address_prefix"])
             sys.exit(1)
+
+        for discoverer in self._config["discovery"]:
+            if discoverer not in DISCOVERERS:
+                eprint("Error: No discovery mechanism named '%s'" % discoverer)
+                sys.exit(1)
 
     def read_rules(self):
         self._rules = collections.OrderedDict()
@@ -57,6 +106,7 @@ class DotTest:
                 o.write("%s=%s\n" % (domain, port))
 
     def refresh_system(self):
+        print("Total %s configured rules." % len(self._rules.keys()))
         self._refresh_hosts()
         self._refresh_ifconfig()
         self._refresh_ports()
@@ -122,16 +172,12 @@ class DotTest:
         self._rules = {}
 
     def get_dottest_rules(self, path):
-        dottest_path = os.path.join(path, ".dottest")
-        directory_module_name = os.path.split(path)[1]
+        rules = collections.OrderedDict()
 
-        if os.path.isfile(dottest_path):
-            with open(dottest_path, "r") as o:
-                values = [l.strip().split("=") for l in o]
-                kv = {v[0]: v[1] for v in values}
-                return kv
+        for discoverer in self._config["discovery"]:
+            rules.update(DISCOVERERS[discoverer](path, self._config))
 
-        return {}
+        return rules
 
     def auto(self, path):
         dottest_rules = self.get_dottest_rules(path)
