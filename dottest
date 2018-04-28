@@ -23,6 +23,7 @@ def require_sudo():
     if os.geteuid() != 0:
         os.execvp("sudo", ["sudo"] + sys.argv)
 
+
 def dottest_discoverer(path, config):
     dottest_path = os.path.join(path, ".dottest")
 
@@ -58,6 +59,7 @@ def spring_discoverer(path, config):
                 return {domain: port}
 
     return {}
+
 
 DISCOVERERS = {
     "dottest": dottest_discoverer,
