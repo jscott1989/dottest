@@ -4,7 +4,7 @@
 
 dotTest is a small script which allows you to configure local .test domains to point to different ports on your machine. For example, if you're developing some software which consists of a frontend service (running on port 8000) and a backend service (running on port 8080), it can be more clear to use http://frontend.test and http://backend.test instead of http://localhost:8000 and http://localhost:8080. This is what dotTest allows.
 
-You can install it with `pip install dottest` (or use [pipsy](https://github.com/mitsuhiko/pipsi) `pipsy install dottest`).
+You can install it with `pip install dottest`.
 
 Right now this is only confirmed to work on MacOS High Sierra (it uses `/etc/hosts`, `pfctl`, and `ifconfig` as configured by default on MacOS High Sierra). There's no reason why it won't work on other \*nix systems which use these tools. If you need support for a different set of tools for your system, please submit a pull request.
 
