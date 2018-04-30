@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(name="dotTest",
       packages=find_packages(),
-      version="0.2",
+      version="0.3",
       description="Set up .test domains for local development",
       author="Jonathan Scott",
       author_email="jonathan@jscott.me",

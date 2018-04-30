@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from __future__ import print_function
 from docopt import docopt
 import json
 import os
@@ -7,6 +8,7 @@ import sys
 import collections
 import yaml
 from sh import pfctl, echo, ifconfig
+
 
 ROOT_CONFIG_FILE = os.path.expanduser("~/.dottest-config")
 SPECIFIC_CONFIG_FILE = os.path.join(os.getcwd(), ".dottest-config")
@@ -202,7 +204,7 @@ dottest init
 dottest auto [path]
 """
 
-arguments = docopt(__doc__, version="dotTest 0.1")
+arguments = docopt(__doc__, version="dotTest 0.3")
 
 require_sudo()
 dottest = DotTest()
